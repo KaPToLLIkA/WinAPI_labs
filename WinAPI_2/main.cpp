@@ -76,22 +76,22 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) 
     case WM_CREATE:
         button_reg_class_error = CreateWindow("button", "REGISTER_CLASS_ERROR",
             WS_VISIBLE | WS_BORDER | WS_CHILD,
-            50, 50, 150, 50, hWnd, NULL, hInst, NULL);
+            50, 50, 200, 50, hWnd, NULL, hInst, NULL);
         ShowWindow(button_reg_class_error, SW_NORMAL);
 
         button_create_window_error = CreateWindow("button", "CREATE_WINDOW_ERROR",
             WS_VISIBLE | WS_BORDER | WS_CHILD,
-            50, 100, 150, 50, hWnd, NULL, hInst, NULL);
+            50, 100, 200, 50, hWnd, NULL, hInst, NULL);
         ShowWindow(button_create_window_error, SW_NORMAL);
 
         button_user_error_create = CreateWindow("button", "USER_ERROR_OPEN",
             WS_VISIBLE | WS_BORDER | WS_CHILD,
-            50, 150, 150, 50, hWnd, NULL, hInst, NULL);
+            50, 150, 200, 50, hWnd, NULL, hInst, NULL);
         ShowWindow(button_user_error_create, SW_NORMAL);
 
         button_user_error_close = CreateWindow("button", "USER_ERROR_CLOSE",
             WS_VISIBLE | WS_BORDER | WS_CHILD,
-            50, 200, 150, 50, hWnd, NULL, hInst, NULL);
+            50, 200, 200, 50, hWnd, NULL, hInst, NULL);
         ShowWindow(button_user_error_close, SW_NORMAL);
 
         break;
