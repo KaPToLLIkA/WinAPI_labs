@@ -1,5 +1,6 @@
 #include "utils.h"
 
+
 sql::Connection* connect(sql::SQLString address, sql::SQLString user, sql::SQLString password)
 {
 	return get_driver_instance()->connect(address, user, password);
@@ -35,3 +36,33 @@ int executeRequest(sql::Connection* con, sql::SQLString& request, std::string& a
 
 	return 0;
 }
+
+HWND createTable(HWND& hwndParent, HINSTANCE& hInst, RECT rc)
+{
+	
+	INITCOMMONCONTROLSEX icex;          
+	icex.dwICC = ICC_LISTVIEW_CLASSES;
+	InitCommonControlsEx(&icex);
+
+	
+
+	HWND hWndListView = CreateWindow(WC_LISTVIEW,
+		"",
+		WS_CHILD | LVS_REPORT | LVS_EDITLABELS,
+		rc.left, rc.top,
+		rc.right - rc.left,
+		rc.bottom - rc.top,
+		hwndParent,
+		(HMENU)ID_TABLE,
+		hInst,
+		NULL);
+
+	
+
+	return (hWndListView);
+
+}
+
+
+
+

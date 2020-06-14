@@ -42,9 +42,9 @@ int WINAPI WinMain(
     hWndMainClass = CreateWindow(mainClassName, "TestMainWindow",
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-        0, 0, hInstance, NULL);
+        0, 0, NULL, NULL);
 
-
+    ShowLastError("Can't create window!");
     if (!hWndMainClass) {
         ShowLastError("Can't create window!");
         return FALSE;
@@ -97,6 +97,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) 
         break;
     case WM_COMMAND:
         if (button_reg_class_error == (HWND)lParam) {
+
 
             Class1.lpfnWndProc = MainWndProc;
             Class1.hIcon = LoadIcon(NULL, IDI_APPLICATION);

@@ -74,15 +74,6 @@ int WINAPI WinMain(
 	_In_ LPSTR lpCmdLine,
 	_In_ int nShowCmd
 ) {
-	g::dllInst = LoadLibrary("D:\\Development\\Projects\\C++\\repos\\DllLab\\Release\\DLLlab.dll");
-	if (!g::dllInst) {
-		ShowLastError("LoadLibrary Error!");
-		return FALSE;
-	}
-
-	scene = (DrawScene)GetProcAddress((HMODULE)g::dllInst, "DrawScene");
-	item = (DrawItem)GetProcAddress((HMODULE)g::dllInst, "DrawItem");
-
 
 	g::hInst = hInstance;
 
@@ -110,7 +101,7 @@ int WINAPI WinMain(
 		}
 	}
 
-	FreeLibrary(g::dllInst);
+	
 	return msg.wParam;
 }
 
@@ -165,6 +156,15 @@ LRESULT CALLBACK WndProc(
 	switch (Msg) {
 	case WM_CREATE:
 	{
+		g::dllInst = LoadLibrary("D:\\Development\\Projects\\C++\\repos\\DllLab\\Release\\DLLlab.dll");
+		if (!g::dllInst) {
+			ShowLastError("LoadLibrary Error!");
+			return FALSE;
+		}
+
+		scene = (DrawScene)GetProcAddress((HMODULE)g::dllInst, "DrawScene");
+		item = (DrawItem)GetProcAddress((HMODULE)g::dllInst, "DrawItem");
+
 		g::WindowMainMenu = CreateMenu();
 
 		SetMenu(hWnd, g::WindowMainMenu);
@@ -260,6 +260,7 @@ LRESULT CALLBACK WndProc(
 	case WM_DESTROY:
 	{
 		PostQuitMessage(0);
+		FreeLibrary(g::dllInst);
 		return 0;
 	}
 	break;

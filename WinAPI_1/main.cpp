@@ -48,25 +48,6 @@ int WINAPI WinMain(
     }
 
 
-    WNDCLASS childClass;
-    childClass.cbClsExtra = childClass.cbWndExtra = 0;
-    childClass.style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW;
-    childClass.lpfnWndProc = ChildWndProc;
-    childClass.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-    childClass.hCursor = LoadCursor(NULL, IDC_ARROW);
-    childClass.hInstance = hInstance;
-    childClass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
-    childClass.lpszMenuName = NULL;
-    childClass.lpszClassName = "childClass";
-
-    if (RegisterClass(&childClass) == 0) {
-        MessageBox(NULL, "Can't register child class!", "ERROR", MB_OK | MB_ICONERROR);
-        return FALSE;
-    }
-
-
-
-
 
     hWndMainClass = CreateWindow(mainClassName, "TestMainWindow",
         WS_OVERLAPPEDWINDOW,
@@ -81,9 +62,7 @@ int WINAPI WinMain(
     else
         ShowWindow(hWndMainClass, nShowCmd);
 
-    GetWindowRect(hWndMainClass, &WndRect);
-    WndH = GetSystemMetrics(SM_CYSCREEN);
-    WndW = GetSystemMetrics(SM_CXSCREEN);
+    
 
 
 
@@ -105,6 +84,28 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) 
     HMENU hMenu;
 
     switch (Msg) {
+    case WM_CREATE:
+        WNDCLASS childClass;
+        childClass.cbClsExtra = childClass.cbWndExtra = 0;
+        childClass.style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW;
+        childClass.lpfnWndProc = ChildWndProc;
+        childClass.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+        childClass.hCursor = LoadCursor(NULL, IDC_ARROW);
+        childClass.hInstance = hInst;
+        childClass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+        childClass.lpszMenuName = NULL;
+        childClass.lpszClassName = "childClass";
+
+        if (RegisterClass(&childClass) == 0) {
+            MessageBox(NULL, "Can't register child class!", "ERROR", MB_OK | MB_ICONERROR);
+            return FALSE;
+        }
+        
+        GetWindowRect(hWnd, &WndRect);
+        WndH = GetSystemMetrics(SM_CYSCREEN);
+        WndW = GetSystemMetrics(SM_CXSCREEN);
+
+        break;
     case WM_CONTEXTMENU:
 
         hMenu = CreatePopupMenu();
