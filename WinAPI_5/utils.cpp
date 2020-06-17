@@ -37,7 +37,7 @@ int executeRequest(sql::Connection* con, sql::SQLString& request, std::string& a
 	return 0;
 }
 
-HWND createTable(HWND& hwndParent, HINSTANCE& hInst, RECT rc)
+HWND createTable(int id, HWND& hwndParent, HINSTANCE& hInst, RECT rc)
 {
 	
 	INITCOMMONCONTROLSEX icex;          
@@ -48,12 +48,12 @@ HWND createTable(HWND& hwndParent, HINSTANCE& hInst, RECT rc)
 
 	HWND hWndListView = CreateWindow(WC_LISTVIEW,
 		"",
-		WS_CHILD | LVS_REPORT | LVS_EDITLABELS,
+		WS_CHILD | LVS_REPORT | LVS_EDITLABELS | WS_VISIBLE,
 		rc.left, rc.top,
 		rc.right - rc.left,
 		rc.bottom - rc.top,
 		hwndParent,
-		(HMENU)ID_TABLE,
+		(HMENU)id,
 		hInst,
 		NULL);
 
@@ -61,6 +61,73 @@ HWND createTable(HWND& hwndParent, HINSTANCE& hInst, RECT rc)
 
 	return (hWndListView);
 
+}
+
+HWND createButton(
+	std::string text, 
+	int id, 
+	HWND& hwndParent, 
+	HINSTANCE& hInst, 
+	RECT rc)
+{
+	return CreateWindow(
+	"BUTTON",
+		text.c_str(),
+		WS_CHILD | WS_VISIBLE | WS_BORDER,
+		RCX(rc),
+		RCY(rc),
+		RCW(rc),
+		RCH(rc),
+		hwndParent,
+		(HMENU)id,
+		hInst,
+		NULL
+	);
+}
+
+HWND createComboBox(
+	std::string text, 
+	int id, 
+	HWND& hwndParent, 
+	HINSTANCE& hInst, 
+	RECT rc)
+{
+	return CreateWindow(
+		"COMBOBOX",
+		text.c_str(),
+		WS_CHILD | WS_VISIBLE | WS_VSCROLL |
+		CBS_DROPDOWNLIST | CBS_SIMPLE,
+		RCX(rc), RCY(rc),
+		RCW(rc), RCH(rc),
+		hwndParent,
+		(HMENU)id,
+		hInst,
+		NULL
+	);
+}
+
+void insertRowsInComboBox(std::vector<std::string> rows, HWND& comboBox)
+{
+	TCHAR tmp[1024];
+
+	for (int i = 0; i < rows.size(); ++i) {
+		memset(tmp, '\0', 1024);
+		memcpy(tmp, rows[i].c_str(), rows[i].size());
+		SendMessage(comboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)tmp);
+	}
+
+	
+
+}
+
+void clearComboBox(HWND& comboBox)
+{
+	int count = SendMessage(comboBox, (UINT)CB_GETCOUNT, (WPARAM)0, (LPARAM)0);
+
+	for (int i = 0; i < count; ++i) {
+
+		SendMessage(comboBox, (UINT)CB_DELETESTRING, (WPARAM)0, (LPARAM)0);
+	}
 }
 
 
