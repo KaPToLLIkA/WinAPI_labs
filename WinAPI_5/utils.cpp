@@ -18,10 +18,18 @@ int executeRequest(sql::Connection* con, sql::SQLString& request, std::string& a
 
 	}
 	catch (sql::SQLException ex) {
+		answer = ex.getSQLStateCStr();
 		return ex.getErrorCode();
 	}
 
 	uint32_t columnCount = res->getMetaData()->getColumnCount();
+	
+	ROW columns;
+	for (uint32_t i = 1; i <= columnCount; ++i) {
+
+		columns.push_back(std::string(res->getMetaData()->getColumnLabel(i).c_str()));
+	}
+	table.push_back(columns);
 
 	while (res->next()) {
 		ROW newRow;
@@ -43,12 +51,11 @@ HWND createTable(int id, HWND& hwndParent, HINSTANCE& hInst, RECT rc)
 	INITCOMMONCONTROLSEX icex;          
 	icex.dwICC = ICC_LISTVIEW_CLASSES;
 	InitCommonControlsEx(&icex);
-
+	InitCommonControls();
 	
 
-	HWND hWndListView = CreateWindow(WC_LISTVIEW,
-		"",
-		WS_CHILD | LVS_REPORT | LVS_EDITLABELS | WS_VISIBLE,
+	HWND hWndListView = CreateWindow(WC_LISTVIEW, "",
+		WS_CHILD | WS_BORDER | LVS_REPORT | LVS_EDITLABELS | LVS_EX_FULLROWSELECT,
 		rc.left, rc.top,
 		rc.right - rc.left,
 		rc.bottom - rc.top,

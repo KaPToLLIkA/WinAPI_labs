@@ -24,10 +24,14 @@
 #define EDIT                10020
 #define MULTILINE           10021
 
+#define SIGNAL_ERROR        10031
+#define SIGNAL_SUCCESS      10032
+
+
 
 namespace g {
     sql::Connection* connection = connect("tcp://127.0.0.1:3306", "root", "1k2o3s4t5y6A");
-    sql::SQLString schema = "mydb";
+    sql::SQLString schema = "lab5";
 
     LPCSTR windowHeader = "MAIN";
     LPCSTR windowClassName = "MainWindow";
@@ -57,7 +61,14 @@ namespace rect {
 
     RECT edit = { 250, 260, 450, 280 };
     RECT multiline = { 500, 0, 800, 400 };
+    RECT msgView = { 250, 0, 450, 400 };
 
+}
+
+namespace request {
+    std::vector<std::string> tokens;
+    std::string table;
+    std::string field;
 }
 
 namespace appContext {
@@ -89,17 +100,28 @@ namespace appContext {
 
     HWND edit;
 
+    HWND msgView;
+
     sql::SQLString requestStr;
 
     TABLE resultTable;
     std::string resultAnswer;
-    int resultCode;
-}
+    int resultCode = -1;
 
+   
+    
+}
 
 void contextChange(States state);
 void changeContextItem(HWND hwnd, char status);
-void actionSelector(WPARAM wParam, LPARAM lParam);
+void signalSelector(int lWord, int hWord);
+
+
+void reset();
+void fillMultilineViewFromTokens(HWND& view, std::vector<std::string>& tokens);
+void updateRequestStr(std::vector<std::string>& tokens);
+void uodateRequestStr(std::string newStr);
+
 
 ATOM RegClass(LPCSTR, LPCSTR, WNDPROC, HINSTANCE, UINT, INT, INT);
 
@@ -109,6 +131,11 @@ VOID ShowLastError(LPCSTR);
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
+void resetDataAndMoveToRequestConstructProc(int lWord, int hWord);
+void resetDataAndMoveToSelectTableProc(int lWord, int hWord);
+void executeRequestProc(int lWord, int hWord);
+void successProc(int lWord, int hWord);
+void errorProc(int lWord, int hWord);
 
 
 int WINAPI WinMain(
@@ -165,9 +192,10 @@ void contextChange(States state)
     changeContextItem(appContext::comboFields, contextTable[s][(int)UIitems::comboFields]);
     changeContextItem(appContext::comboTables, contextTable[s][(int)UIitems::comboTables]);
     changeContextItem(appContext::edit, contextTable[s][(int)UIitems::editField]);
-    changeContextItem(appContext::hwndTable, contextTable[s][(int)UIitems::resultTable]);
+    //changeContextItem(appContext::hwndTable, contextTable[s][(int)UIitems::resultTable]);
     changeContextItem(appContext::multilineEdit, contextTable[s][(int)UIitems::multilineField]);
-   
+    changeContextItem(appContext::msgView, contextTable[s][(int)UIitems::errorMsg]);
+    
 }
 
 void changeContextItem(HWND hwnd, char status)
@@ -187,9 +215,86 @@ void changeContextItem(HWND hwnd, char status)
     }
 }
 
-void actionSelector(WPARAM wParam, LPARAM lParam)
+void signalSelector(int lWord, int hWord)
 {
-    //actionTable
+    
+
+    switch (lWord) {
+    case BUTTON_OK: 
+    {
+        appContext::signalNow = Signals::ok;
+    } break;
+    case BUTTON_NEXT: 
+    {
+        appContext::signalNow = Signals::next;
+    } break;
+    case BUTTON_EXECUTE: 
+    {
+        appContext::signalNow = Signals::execute;
+    } break;
+    case BUTTON_DELETE:
+    {
+        appContext::signalNow = Signals::delete_;
+    } break;
+    case BUTTON_SELECT:
+    {
+        appContext::signalNow = Signals::select_;
+    } break;
+    case BUTTON_UPDATE:
+    {
+        appContext::signalNow = Signals::update;
+    } break;
+    case BUTTON_INSERT:
+    {
+        appContext::signalNow = Signals::insert;
+    } break;
+    case MENU_ITEM_TABLE_MODE:
+    {
+        appContext::signalNow = Signals::menuTableItem;
+    } break;
+    case MENU_ITEM_QUERY_BUILDER_MODE:
+    {
+        appContext::signalNow = Signals::menuRequestItem;
+    } break;
+    case SIGNAL_ERROR:
+    {
+        appContext::signalNow = Signals::error;
+    } break;
+    case SIGNAL_SUCCESS:
+    {
+        appContext::signalNow = Signals::success;
+    } break;
+    }
+
+}
+
+void reset()
+{
+    request::tokens.clear();
+}
+
+void fillMultilineViewFromTokens(HWND& view, std::vector<std::string>& tokens)
+{
+    std::string s;
+    for (auto token : tokens) {
+        s.append(token);
+    }
+    SetWindowText(view, s.c_str());
+}
+
+void updateRequestStr(std::vector<std::string>& tokens)
+{
+    std::string s;
+    for (auto token : tokens) {
+        s.append(token);
+    }
+    appContext::requestStr = s.c_str();
+}
+
+void uodateRequestStr(std::string newStr)
+{
+    appContext::requestStr = newStr;
+    SetWindowText(appContext::multilineEdit, newStr.c_str());
 }
 
 ATOM RegClass(
@@ -287,7 +392,7 @@ LRESULT CALLBACK WndProc(
     case WM_CREATE:
     {
         g::connection->setSchema(g::schema);
-        appContext::requestStr = sql::SQLString("SELECT * FROM x;");
+        
 
         appContext::mainWindowMenu = CreateMenu();
 
@@ -357,8 +462,49 @@ LRESULT CALLBACK WndProc(
             RCW(rect::multiline), RCH(rect::multiline),
             hWnd, NULL, appContext::hInst, 0);
 
-        //contextChange(appContext::stateNow);
+        appContext::msgView = CreateWindow("Edit", NULL,
+            WS_CHILD | WS_VISIBLE | WS_BORDER | ES_MULTILINE | ES_READONLY,
+            RCX(rect::msgView), RCY(rect::msgView),
+            RCW(rect::msgView), RCH(rect::msgView),
+            hWnd, NULL, appContext::hInst, 0);
 
+        contextChange(appContext::stateNow);
+
+    }
+    break;
+    case WM_COMMAND: 
+    {
+        int lWord = LOWORD(wParam);
+        int hWord = HIWORD(wParam);
+
+        signalSelector(lWord, hWord);
+        appContext::actionNow = actionTable[(int)appContext::stateNow][(int)appContext::signalNow];
+
+
+        switch (appContext::actionNow) {
+        case Actions::addFieldToRequest:  break;
+        case Actions::addFieldToRequestsCondition:break;
+        case Actions::clearTable:break;
+        case Actions::closeErrorWindow:break;
+        case Actions::execRequest: executeRequestProc(lWord, hWord); break;
+        case Actions::insertComparisonOperator:break;
+        case Actions::insertFieldValue:break;
+        case Actions::insertFieldValueInWhere:break;
+        case Actions::insertLogicOperator:break;
+        case Actions::resetDataAndMoveToRequestConstruct: resetDataAndMoveToRequestConstructProc(lWord, hWord); break;
+        case Actions::resetDataAndMoveToSelectTable: resetDataAndMoveToSelectTableProc(lWord, hWord); break;
+        case Actions::showError: errorProc(lWord, hWord); break;
+        case Actions::showResult: successProc(lWord, hWord); break;
+        case Actions::startBuildDelete:break;
+        case Actions::startBuildInsert:break;
+        case Actions::startBuildSelect:break;
+        case Actions::startBuildUpdate:break;
+        case Actions::startBuildWhereSection:break;
+
+        }
+
+        appContext::stateNow = stateMoveTable[(int)appContext::stateNow][(int)appContext::signalNow];
+        contextChange(appContext::stateNow);
     }
     break;
     case WM_DESTROY:
@@ -373,3 +519,209 @@ LRESULT CALLBACK WndProc(
 
     return DefWindowProc(hWnd, Msg, wParam, lParam);
 }
+
+void resetDataAndMoveToRequestConstructProc(int lWord, int hWord)
+{
+    if (lWord == COMBO_TABLES) {
+
+        switch (hWord) {
+        case CBN_SELCHANGE:
+
+            int line = SendMessage(appContext::comboTables, CB_GETCURSEL, 0, 0);
+
+            if (line != CB_ERR) {
+                request::table = appContext::resultTable[line][0];
+            }
+            break;
+        }
+    }
+    else {
+        reset();
+
+        appContext::requestStr = "SHOW TABLES;";
+        appContext::resultCode = executeRequest(
+            g::connection,
+            appContext::requestStr,
+            appContext::resultAnswer,
+            appContext::resultTable
+        );
+
+
+        if (appContext::resultCode == 0) {
+            std::vector<std::string> list;
+            for (auto item : appContext::resultTable) {
+                list.push_back(item.at(0));
+            }
+
+            clearComboBox(appContext::comboTables);
+            insertRowsInComboBox(list, appContext::comboTables);
+        }
+    }
+}
+
+void resetDataAndMoveToSelectTableProc(int lWord, int hWord)
+{
+    if (lWord == COMBO_TABLES) {
+        switch (hWord) {
+        case CBN_SELCHANGE:
+
+            int line = SendMessage(appContext::comboTables, CB_GETCURSEL, 0, 0);
+
+            if (line != CB_ERR) {
+                request::tokens.clear();
+                request::table = appContext::resultTable[line+1][0];
+                request::tokens.push_back("SELECT * FROM ");
+                request::tokens.push_back(request::table);
+                request::tokens.push_back(";");
+                fillMultilineViewFromTokens(appContext::multilineEdit, request::tokens);
+                updateRequestStr(request::tokens);
+            }
+            break;
+        }
+    }
+    else {
+        reset();
+
+        
+
+        appContext::requestStr = "SHOW TABLES;";
+        appContext::resultCode = executeRequest(
+            g::connection,
+            appContext::requestStr,
+            appContext::resultAnswer,
+            appContext::resultTable
+        );
+
+
+        if (appContext::resultCode == 0) {
+            std::vector<std::string> list;
+            for (size_t i = 1; i < appContext::resultTable.size(); ++i) {
+                list.push_back(appContext::resultTable[i][0]);
+            }
+
+            clearComboBox(appContext::comboTables);
+            insertRowsInComboBox(list, appContext::comboTables);
+        }
+    }
+}
+
+void executeRequestProc(int lWord, int hWord)
+{
+    appContext::resultCode = executeRequest(
+        g::connection,
+        appContext::requestStr,
+        appContext::resultAnswer,
+        appContext::resultTable
+    );
+
+    appContext::stateNow = stateMoveTable[(int)appContext::stateNow][(int)appContext::signalNow];
+    contextChange(appContext::stateNow);
+
+    if (appContext::resultCode == 0) {
+        SendMessage(appContext::mainWindow, WM_COMMAND, MAKEWPARAM(SIGNAL_SUCCESS, 0), 0);
+    }
+    else {
+        SendMessage(appContext::mainWindow, WM_COMMAND, MAKEWPARAM(SIGNAL_ERROR, 0), 0);
+    }
+   
+    
+}
+
+void successProc(int lWord, int hWord)
+{
+   
+    LVCOLUMN lvC;
+    LVITEM lvI;
+
+    //memset(&lvi, 0, sizeof(lvi));
+    //memset(&lvc, 0, sizeof(lvc));
+
+    //lvc.mask = LVCF_TEXT | LVCF_SUBITEM | LVCF_WIDTH | LVCF_FMT;
+    //lvc.fmt = LVCFMT_LEFT;
+    //lvc.cx = 200;
+    //lvc.cchTextMax = 100;
+
+    //lvi.mask = LVIF_IMAGE | LVIF_TEXT | LVIF_PARAM;
+    //lvi.pszText = LPSTR_TEXTCALLBACK;
+
+    //for (int i = 0; i < appContext::resultTable[0].size(); ++i) {
+    //    
+    //    lvc.pszText = const_cast<char*>(appContext::resultTable[0][i].c_str());
+
+    //    ListView_InsertColumn(appContext::hwndTable, i, &lvc);
+    //}
+    ////row
+    //for (int i = 1; i < appContext::resultTable.size(); ++i) {
+    //    lvi.iItem = i - 1;
+    //    ListView_InsertItem(appContext::hwndTable, &lvi);
+    //    
+    //    //col
+    //    for (int ii = 0; ii < appContext::resultTable[i].size(); ++ii) {
+    //        ListView_SetItemText(
+    //            appContext::hwndTable, 
+    //            0, 
+    //            ii, 
+    //            const_cast<char*>(appContext::resultTable[i][ii].c_str()));
+    //    }
+
+    //}
+    //
+
+    lvC.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
+    lvC.fmt = LVCFMT_LEFT;  // left align the column
+    lvC.cx = 75;            // width of the column, in pixels
+    lvC.pszText = (LPSTR)"text";
+
+    // Add the columns.
+    for (int index = 0; index < appContext::resultTable[0].size(); index++)
+    {
+        lvC.iSubItem = index;
+        
+        if (ListView_InsertColumn(appContext::hwndTable, index, &lvC) == -1)
+            MessageBox(NULL, "1", "1", MB_OK);
+    }
+
+    // Finally, let's add the actual items to the control
+    // Fill in the LV_ITEM structure for each of the items to add
+    // to the list.
+    // The mask specifies the the .pszText, .iImage, .lParam and .state
+    // members of the LV_ITEM structure are valid.
+    lvI.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM | LVIF_STATE;
+    lvI.state = 0;      //
+    lvI.stateMask = 0;  //
+
+    //for (index = 0; index < NUM_ITEMS; index++)
+    //{
+    //    lvI.iItem = index;
+    //    lvI.iSubItem = 0;
+    //    // The parent window is responsible for storing the text. The List view
+    //    // window will send a LVN_GETDISPINFO when it needs the text to display/
+    //    lvI.pszText = LPSTR_TEXTCALLBACK;
+    //    lvI.cchTextMax = MAX_ITEMLEN;
+    //    lvI.iImage = index;
+    //    lvI.lParam = (LPARAM)&rgHouseInfo[index];
+
+    //    if (ListView_InsertItem(hWndList, &lvI) == -1)
+    //        return NULL;
+
+    //    for (iSubItem = 1; iSubItem < NUM_COLUMNS; iSubItem++)
+    //    {
+    //        ListView_SetItemText(hWndList,
+    //            index,
+    //            iSubItem,
+    //            LPSTR_TEXTCALLBACK);
+    //    }
+    //}
+}
+
+void errorProc(int lWord, int hWord)
+{
+    std::string errorDesc = std::to_string(appContext::resultCode) + "\n" + appContext::resultAnswer;
+    SetWindowText(appContext::msgView, errorDesc.c_str());
+    
+}
+
+
+
+
+

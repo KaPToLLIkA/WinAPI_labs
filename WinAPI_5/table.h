@@ -42,7 +42,7 @@ enum class States {
 
 enum class Actions {
 	emptyA,
-	execSelect,
+	//execSelect,
 	resetDataAndMoveToRequestConstruct,
 	resetDataAndMoveToSelectTable,
 	showResult,
@@ -73,11 +73,11 @@ enum class Signals {
 	emptyS,
 	ok,
 	next,
-	execute,
 	select_,
-	insert,
-	update,
 	delete_,
+	update,
+	insert,
+	execute,
 	menuRequestItem,
 	menuTableItem,
 	success,
@@ -106,11 +106,11 @@ enum class Signals {
 char contextTable[17][16] = {
 	//			  1    2    3    4    5    6    7    8    9    10   11   12   13   14   15   16
 	/*s*/		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '+', ' ', ' ', ' ', ' ', ' '},
-	/*1*/		{'+', ' ', ' ', ' ', '+', ' ', ' ', ' ', ' ', ' ', '+', ' ', ' ', ' ', ' ', ' '},
-	/*2*/		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '+', ' ', ' ', ' ', ' ', ' '},
+	/*1*/		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '+', ' ', ' ', ' ', ' ', ' '},
+	/*2*/		{'+', ' ', ' ', ' ', '+', ' ', ' ', ' ', ' ', ' ', '+', ' ', ' ', ' ', ' ', ' '},
 	/*3*/		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '+', ' ', ' ', ' ', ' ', ' '},
-	/*4*/		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '+', '+', ' ', ' ', ' ', ' '},
-	/*5*/		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-', ' ', '+', ' ', ' ', ' ', ' ', ' '},
+	/*4*/		{' ', ' ', '+', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '+', '+', ' ', ' ', ' ', ' '},
+	/*5*/		{' ', ' ', '+', ' ', ' ', ' ', ' ', ' ', '-', ' ', '+', ' ', ' ', ' ', ' ', ' '},
 	/*6*/		{'+', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-', '+', ' ', '+', '+', '+', '+'},
 	/*7*/		{' ', '+', '+', '+', ' ', ' ', ' ', ' ', ' ', '-', '+', ' ', ' ', ' ', ' ', ' '},
 	/*8*/		{' ', ' ', '+', ' ', ' ', ' ', ' ', '+', ' ', '-', '+', ' ', ' ', ' ', ' ', ' '},
@@ -145,7 +145,7 @@ Actions actionTable[17][12] = {
 	//			0				 1											 2								3									4								5								6								7									8															9						10								11   
 /*s*/	{Actions::emptyA, Actions::emptyA,						Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::emptyA,								Actions::emptyA,							Actions::emptyA,			Actions::emptyA, },
 /*1*/	{Actions::emptyA, Actions::emptyA,						Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA, },
-/*2*/	{Actions::emptyA, Actions::emptyA,						Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::execSelect,		Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA, },
+/*2*/	{Actions::emptyA, Actions::emptyA,						Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::execRequest,		Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA, },
 /*3*/	{Actions::emptyA, Actions::emptyA,						Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::showResult,		Actions::showError, },
 /*4*/	{Actions::emptyA, Actions::closeErrorWindow,			Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA, },
 /*5*/	{Actions::emptyA, Actions::clearTable,					Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA, },

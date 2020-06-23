@@ -15,6 +15,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WinAPI_4_DLL", "WinAPI_4_DL
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WinAPI_5", "WinAPI_5\WinAPI_5.vcxproj", "{B299AED0-7557-4212-AEB1-48B1C67EC4B1}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TEST", "TEST\TEST.vcxproj", "{E9012F0E-B871-48ED-8CB7-0E7CBE871B17}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -71,6 +73,14 @@ Global
 		{B299AED0-7557-4212-AEB1-48B1C67EC4B1}.Release|x64.Build.0 = Release|x64
 		{B299AED0-7557-4212-AEB1-48B1C67EC4B1}.Release|x86.ActiveCfg = Release|Win32
 		{B299AED0-7557-4212-AEB1-48B1C67EC4B1}.Release|x86.Build.0 = Release|Win32
+		{E9012F0E-B871-48ED-8CB7-0E7CBE871B17}.Debug|x64.ActiveCfg = Debug|x64
+		{E9012F0E-B871-48ED-8CB7-0E7CBE871B17}.Debug|x64.Build.0 = Debug|x64
+		{E9012F0E-B871-48ED-8CB7-0E7CBE871B17}.Debug|x86.ActiveCfg = Debug|Win32
+		{E9012F0E-B871-48ED-8CB7-0E7CBE871B17}.Debug|x86.Build.0 = Debug|Win32
+		{E9012F0E-B871-48ED-8CB7-0E7CBE871B17}.Release|x64.ActiveCfg = Release|x64
+		{E9012F0E-B871-48ED-8CB7-0E7CBE871B17}.Release|x64.Build.0 = Release|x64
+		{E9012F0E-B871-48ED-8CB7-0E7CBE871B17}.Release|x86.ActiveCfg = Release|Win32
+		{E9012F0E-B871-48ED-8CB7-0E7CBE871B17}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
