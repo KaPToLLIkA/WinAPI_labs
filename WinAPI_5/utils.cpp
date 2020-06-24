@@ -28,6 +28,7 @@ int executeRequest(sql::Connection* con, sql::SQLString& request, std::string& a
 	for (uint32_t i = 1; i <= columnCount; ++i) {
 
 		columns.push_back(std::string(res->getMetaData()->getColumnLabel(i).c_str()));
+		
 	}
 	table.push_back(columns);
 
@@ -51,7 +52,7 @@ HWND createTable(int id, HWND& hwndParent, HINSTANCE& hInst, RECT rc)
 	INITCOMMONCONTROLSEX icex;          
 	icex.dwICC = ICC_LISTVIEW_CLASSES;
 	InitCommonControlsEx(&icex);
-	InitCommonControls();
+	//InitCommonControls();
 	
 
 	HWND hWndListView = CreateWindow(WC_LISTVIEW, "",

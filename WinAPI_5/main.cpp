@@ -112,6 +112,9 @@ namespace appContext {
     
 }
 
+static int COLUMNS_COUNT = 0;
+static int ROWS_COUNT = 0;
+
 void contextChange(States state);
 void changeContextItem(HWND hwnd, char status);
 void signalSelector(int lWord, int hWord);
@@ -136,6 +139,11 @@ void resetDataAndMoveToSelectTableProc(int lWord, int hWord);
 void executeRequestProc(int lWord, int hWord);
 void successProc(int lWord, int hWord);
 void errorProc(int lWord, int hWord);
+
+void startBuildDeleteProc(int lWord, int hWord);
+void startBuildSelectProc(int lWord, int hWord);
+void startBuildInsertProc(int lWord, int hWord);
+void startBuildUpdateProc(int lWord, int hWord);
 
 
 int WINAPI WinMain(
@@ -192,7 +200,7 @@ void contextChange(States state)
     changeContextItem(appContext::comboFields, contextTable[s][(int)UIitems::comboFields]);
     changeContextItem(appContext::comboTables, contextTable[s][(int)UIitems::comboTables]);
     changeContextItem(appContext::edit, contextTable[s][(int)UIitems::editField]);
-    //changeContextItem(appContext::hwndTable, contextTable[s][(int)UIitems::resultTable]);
+    changeContextItem(appContext::hwndTable, contextTable[s][(int)UIitems::resultTable]);
     changeContextItem(appContext::multilineEdit, contextTable[s][(int)UIitems::multilineField]);
     changeContextItem(appContext::msgView, contextTable[s][(int)UIitems::errorMsg]);
     
@@ -411,7 +419,7 @@ LRESULT CALLBACK WndProc(
         DrawMenuBar(hWnd);
 
 
-        createTable(ID_TABLE, hWnd, appContext::hInst, rect::table);
+        appContext::hwndTable = createTable(ID_TABLE, hWnd, appContext::hInst, rect::table);
 
         // button
         appContext::buttonOk = createButton("OK", BUTTON_OK,
@@ -480,7 +488,6 @@ LRESULT CALLBACK WndProc(
         signalSelector(lWord, hWord);
         appContext::actionNow = actionTable[(int)appContext::stateNow][(int)appContext::signalNow];
 
-
         switch (appContext::actionNow) {
         case Actions::addFieldToRequest:  break;
         case Actions::addFieldToRequestsCondition:break;
@@ -495,7 +502,7 @@ LRESULT CALLBACK WndProc(
         case Actions::resetDataAndMoveToSelectTable: resetDataAndMoveToSelectTableProc(lWord, hWord); break;
         case Actions::showError: errorProc(lWord, hWord); break;
         case Actions::showResult: successProc(lWord, hWord); break;
-        case Actions::startBuildDelete:break;
+        case Actions::startBuildDelete:  break;
         case Actions::startBuildInsert:break;
         case Actions::startBuildSelect:break;
         case Actions::startBuildUpdate:break;
@@ -545,6 +552,7 @@ void resetDataAndMoveToRequestConstructProc(int lWord, int hWord)
             appContext::resultAnswer,
             appContext::resultTable
         );
+        appContext::requestStr = "";
 
 
         if (appContext::resultCode == 0) {
@@ -591,7 +599,7 @@ void resetDataAndMoveToSelectTableProc(int lWord, int hWord)
             appContext::resultAnswer,
             appContext::resultTable
         );
-
+        appContext::requestStr = "";
 
         if (appContext::resultCode == 0) {
             std::vector<std::string> list;
@@ -629,96 +637,91 @@ void executeRequestProc(int lWord, int hWord)
 
 void successProc(int lWord, int hWord)
 {
+    if (COLUMNS_COUNT != 0) {
+        for (int i = 0; i < COLUMNS_COUNT; i++) {
+            ListView_DeleteColumn(appContext::hwndTable, i);
+        }
+        ListView_DeleteAllItems(appContext::hwndTable);
+        for (int i = 0; i < COLUMNS_COUNT; i++) {
+            ListView_DeleteColumn(appContext::hwndTable, i);
+        }
+    }
    
     LVCOLUMN lvC;
     LVITEM lvI;
 
-    //memset(&lvi, 0, sizeof(lvi));
-    //memset(&lvc, 0, sizeof(lvc));
+    memset(&lvI, 0, sizeof(lvI));
+    memset(&lvC, 0, sizeof(lvC));
 
-    //lvc.mask = LVCF_TEXT | LVCF_SUBITEM | LVCF_WIDTH | LVCF_FMT;
-    //lvc.fmt = LVCFMT_LEFT;
-    //lvc.cx = 200;
-    //lvc.cchTextMax = 100;
-
-    //lvi.mask = LVIF_IMAGE | LVIF_TEXT | LVIF_PARAM;
-    //lvi.pszText = LPSTR_TEXTCALLBACK;
-
-    //for (int i = 0; i < appContext::resultTable[0].size(); ++i) {
-    //    
-    //    lvc.pszText = const_cast<char*>(appContext::resultTable[0][i].c_str());
-
-    //    ListView_InsertColumn(appContext::hwndTable, i, &lvc);
-    //}
-    ////row
-    //for (int i = 1; i < appContext::resultTable.size(); ++i) {
-    //    lvi.iItem = i - 1;
-    //    ListView_InsertItem(appContext::hwndTable, &lvi);
-    //    
-    //    //col
-    //    for (int ii = 0; ii < appContext::resultTable[i].size(); ++ii) {
-    //        ListView_SetItemText(
-    //            appContext::hwndTable, 
-    //            0, 
-    //            ii, 
-    //            const_cast<char*>(appContext::resultTable[i][ii].c_str()));
-    //    }
-
-    //}
-    //
 
     lvC.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
-    lvC.fmt = LVCFMT_LEFT;  // left align the column
-    lvC.cx = 75;            // width of the column, in pixels
-    lvC.pszText = (LPSTR)"text";
+    lvC.fmt = LVCFMT_LEFT;  
+    lvC.cx = 100;            
 
-    // Add the columns.
-    for (int index = 0; index < appContext::resultTable[0].size(); index++)
+    ROWS_COUNT = (int)appContext::resultTable.size();
+    COLUMNS_COUNT = (int)appContext::resultTable[0].size();
+
+    for (int index = 0; index < COLUMNS_COUNT; index++)
     {
+        lvC.pszText = (LPSTR)appContext::resultTable[0][index].c_str();
         lvC.iSubItem = index;
         
-        if (ListView_InsertColumn(appContext::hwndTable, index, &lvC) == -1)
-            MessageBox(NULL, "1", "1", MB_OK);
+        ListView_InsertColumn(appContext::hwndTable, index, &lvC);
     }
 
-    // Finally, let's add the actual items to the control
-    // Fill in the LV_ITEM structure for each of the items to add
-    // to the list.
-    // The mask specifies the the .pszText, .iImage, .lParam and .state
-    // members of the LV_ITEM structure are valid.
     lvI.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM | LVIF_STATE;
-    lvI.state = 0;      //
-    lvI.stateMask = 0;  //
+    lvI.state = 0;
+    lvI.stateMask = 0;
 
-    //for (index = 0; index < NUM_ITEMS; index++)
-    //{
-    //    lvI.iItem = index;
-    //    lvI.iSubItem = 0;
-    //    // The parent window is responsible for storing the text. The List view
-    //    // window will send a LVN_GETDISPINFO when it needs the text to display/
-    //    lvI.pszText = LPSTR_TEXTCALLBACK;
-    //    lvI.cchTextMax = MAX_ITEMLEN;
-    //    lvI.iImage = index;
-    //    lvI.lParam = (LPARAM)&rgHouseInfo[index];
+  
+    for (int index = 1; index < ROWS_COUNT; index++)
+    {
+        lvI.iItem = index - 1;
+        lvI.iSubItem = 0;
+        
+        lvI.pszText = LPSTR_TEXTCALLBACK;
+        lvI.cchTextMax = 100;
+        lvI.pszText = (LPSTR)appContext::resultTable[index][0].c_str();
 
-    //    if (ListView_InsertItem(hWndList, &lvI) == -1)
-    //        return NULL;
+        
 
-    //    for (iSubItem = 1; iSubItem < NUM_COLUMNS; iSubItem++)
-    //    {
-    //        ListView_SetItemText(hWndList,
-    //            index,
-    //            iSubItem,
-    //            LPSTR_TEXTCALLBACK);
-    //    }
-    //}
+        ListView_InsertItem(appContext::hwndTable, &lvI);
+    }
+
+    for (int index = 1; index < ROWS_COUNT; index++) {
+        for (int iSubItem = 1; iSubItem < COLUMNS_COUNT; iSubItem++)
+        {
+            ListView_SetItemText(appContext::hwndTable,
+                index - 1,
+                iSubItem,
+                (LPSTR)appContext::resultTable[index][iSubItem].c_str());
+        }
+    }
+    appContext::resultTable.clear();
 }
 
 void errorProc(int lWord, int hWord)
 {
-    std::string errorDesc = std::to_string(appContext::resultCode) + "\n" + appContext::resultAnswer;
+    std::string errorDesc = "ErrCode: " + std::to_string(appContext::resultCode) + "   State: " + appContext::resultAnswer;
     SetWindowText(appContext::msgView, errorDesc.c_str());
     
+}
+
+void startBuildDeleteProc(int lWord, int hWord)
+{
+
+}
+
+void startBuildSelectProc(int lWord, int hWord)
+{
+}
+
+void startBuildInsertProc(int lWord, int hWord)
+{
+}
+
+void startBuildUpdateProc(int lWord, int hWord)
+{
 }
 
 
