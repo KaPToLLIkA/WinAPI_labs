@@ -36,8 +36,10 @@ namespace g {
     LPCSTR windowHeader = "MAIN";
     LPCSTR windowClassName = "MainWindow";
 
-    std::vector<std::string> operators = { "=", "<=>", "<", ">", "<=", ">=", "<>", "!=" };
-    std::vector<std::string> conditions = { "AND", "OR", "NOT", "XOR" };
+    std::vector<std::string> selectedTables;
+    std::vector<std::string> selectedFields;
+    std::vector<std::string> operators = { "=", "<=>", "<", ">", "<=", ">=", "<>", "!=", " "};
+    std::vector<std::string> conditions = { " AND ", " OR ", " NOT ", " XOR ", " "};
 }
 
 
@@ -69,6 +71,8 @@ namespace request {
     std::vector<std::string> tokens;
     std::string table;
     std::string field;
+    std::string logicOp;
+    std::string compareOp;
 }
 
 namespace appContext {
@@ -139,11 +143,29 @@ void resetDataAndMoveToSelectTableProc(int lWord, int hWord);
 void executeRequestProc(int lWord, int hWord);
 void successProc(int lWord, int hWord);
 void errorProc(int lWord, int hWord);
+void closeErrorWindowProc(int lWord, int hWord);
+
 
 void startBuildDeleteProc(int lWord, int hWord);
 void startBuildSelectProc(int lWord, int hWord);
 void startBuildInsertProc(int lWord, int hWord);
 void startBuildUpdateProc(int lWord, int hWord);
+
+void clearTableProc(int lWord, int hWord);
+void addFieldToRequestProc(int lWord, int hWord);
+
+
+void saveSelFieldProc(int lWord, int hWord);
+void saveSelTableProc(int lWord, int hWord);
+void saveSelLogicOpProc(int lWord, int hWord);
+void saveSelCompareOpProc(int lWord, int hWord);
+
+void insertFieldValueProc(int lWord, int hWord);
+
+void startBuildWhereSectionProc(int lWord, int hWord);
+void insertFieldValueInWhereProc(int lWord, int hWord);
+void insertCompareOperatorProc(int lWord, int hWord);
+void insertLogicOperatorProc(int lWord, int hWord);
 
 
 int WINAPI WinMain(
@@ -160,6 +182,7 @@ int WINAPI WinMain(
     ShowWindow(appContext::mainWindow, SW_SHOW);
     UpdateWindow(appContext::mainWindow);
 
+    
 
     MSG msg;
     BOOL bRet;
@@ -272,6 +295,12 @@ void signalSelector(int lWord, int hWord)
     {
         appContext::signalNow = Signals::success;
     } break;
+    case COMBO_CONDITIONS: appContext::signalNow = Signals::selLogicOp; break;
+    case COMBO_FIELDS: appContext::signalNow = Signals::selField;       break;
+    case COMBO_OPERATORS: appContext::signalNow = Signals::selCompareOp;break;
+    case COMBO_TABLES: appContext::signalNow = Signals::selTable;       break;
+    case EDIT: appContext::signalNow = Signals::emptyS;                 break;
+    
     }
 
 }
@@ -285,7 +314,12 @@ void fillMultilineViewFromTokens(HWND& view, std::vector<std::string>& tokens)
 {
     std::string s;
     for (auto token : tokens) {
-        s.append(token);
+        if (token != "tb_pos") {
+            s.append(token);
+        }
+        else {
+            s.append(request::table);
+        }
     }
     SetWindowText(view, s.c_str());
 }
@@ -294,7 +328,12 @@ void updateRequestStr(std::vector<std::string>& tokens)
 {
     std::string s;
     for (auto token : tokens) {
-        s.append(token);
+        if (token != "tb_pos") {
+            s.append(token);
+        }
+        else {
+            s.append(request::table);
+        }
     }
     appContext::requestStr = s.c_str();
 }
@@ -462,7 +501,7 @@ LRESULT CALLBACK WndProc(
         appContext::edit = CreateWindow("Edit", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER,
             RCX(rect::edit), RCY(rect::edit), 
             RCW(rect::edit), RCH(rect::edit),
-            hWnd, NULL, appContext::hInst, 0);
+            hWnd, HMENU(EDIT), appContext::hInst, 0);
 
         appContext::multilineEdit = CreateWindow("Edit", NULL, 
             WS_CHILD | WS_VISIBLE | WS_BORDER | ES_MULTILINE | ES_READONLY,
@@ -489,27 +528,31 @@ LRESULT CALLBACK WndProc(
         appContext::actionNow = actionTable[(int)appContext::stateNow][(int)appContext::signalNow];
 
         switch (appContext::actionNow) {
-        case Actions::addFieldToRequest:  break;
-        case Actions::addFieldToRequestsCondition:break;
-        case Actions::clearTable:break;
-        case Actions::closeErrorWindow:break;
+        case Actions::addFieldToRequest: addFieldToRequestProc(lWord, hWord); break;
+        case Actions::clearTable: clearTableProc(lWord, hWord); break;
+        case Actions::closeErrorWindow: closeErrorWindowProc(lWord, hWord); break;
         case Actions::execRequest: executeRequestProc(lWord, hWord); break;
-        case Actions::insertComparisonOperator:break;
-        case Actions::insertFieldValue:break;
-        case Actions::insertFieldValueInWhere:break;
-        case Actions::insertLogicOperator:break;
+        case Actions::insertComparisonOperator: insertCompareOperatorProc(lWord, hWord); break;
+        case Actions::insertFieldValue: insertFieldValueProc(lWord, hWord); break;
+        case Actions::insertFieldValueInWhere: insertFieldValueInWhereProc(lWord, hWord); break;
+        case Actions::insertLogicOperator: insertLogicOperatorProc(lWord, hWord); break;
         case Actions::resetDataAndMoveToRequestConstruct: resetDataAndMoveToRequestConstructProc(lWord, hWord); break;
         case Actions::resetDataAndMoveToSelectTable: resetDataAndMoveToSelectTableProc(lWord, hWord); break;
         case Actions::showError: errorProc(lWord, hWord); break;
         case Actions::showResult: successProc(lWord, hWord); break;
-        case Actions::startBuildDelete:  break;
-        case Actions::startBuildInsert:break;
-        case Actions::startBuildSelect:break;
-        case Actions::startBuildUpdate:break;
-        case Actions::startBuildWhereSection:break;
+        case Actions::startBuildDelete: startBuildDeleteProc(lWord, hWord); break;
+        case Actions::startBuildInsert: startBuildInsertProc(lWord, hWord); break;
+        case Actions::startBuildSelect: startBuildSelectProc(lWord, hWord); break;
+        case Actions::startBuildUpdate: startBuildUpdateProc(lWord, hWord); break;
+        case Actions::startBuildWhereSection: startBuildWhereSectionProc(lWord, hWord); break;
+        case Actions::saveSelCompareOp: saveSelCompareOpProc(lWord, hWord); break;
+        case Actions::saveSelField: saveSelFieldProc(lWord, hWord); break;
+        case Actions::saveSelLogicOp: saveSelLogicOpProc(lWord, hWord); break;
+        case Actions::saveSelTable: saveSelTableProc(lWord, hWord); break;
 
         }
 
+        
         appContext::stateNow = stateMoveTable[(int)appContext::stateNow][(int)appContext::signalNow];
         contextChange(appContext::stateNow);
     }
@@ -529,92 +572,61 @@ LRESULT CALLBACK WndProc(
 
 void resetDataAndMoveToRequestConstructProc(int lWord, int hWord)
 {
-    if (lWord == COMBO_TABLES) {
+    reset();
 
-        switch (hWord) {
-        case CBN_SELCHANGE:
+    appContext::requestStr = sql::SQLString("SHOW TABLES");
+    appContext::resultCode = executeRequest(
+        g::connection,
+        appContext::requestStr,
+        appContext::resultAnswer,
+        appContext::resultTable
+    );
+    appContext::requestStr = sql::SQLString("");
 
-            int line = SendMessage(appContext::comboTables, CB_GETCURSEL, 0, 0);
 
-            if (line != CB_ERR) {
-                request::table = appContext::resultTable[line][0];
-            }
-            break;
+    if (appContext::resultCode == 0) {
+        g::selectedTables.clear();
+        for (size_t i = 1; i < appContext::resultTable.size(); ++i) {
+            g::selectedTables.push_back(appContext::resultTable[i][0]);
         }
+
+        clearComboBox(appContext::comboTables);
+        insertRowsInComboBox(g::selectedTables, appContext::comboTables);
     }
-    else {
-        reset();
-
-        appContext::requestStr = "SHOW TABLES;";
-        appContext::resultCode = executeRequest(
-            g::connection,
-            appContext::requestStr,
-            appContext::resultAnswer,
-            appContext::resultTable
-        );
-        appContext::requestStr = "";
-
-
-        if (appContext::resultCode == 0) {
-            std::vector<std::string> list;
-            for (auto item : appContext::resultTable) {
-                list.push_back(item.at(0));
-            }
-
-            clearComboBox(appContext::comboTables);
-            insertRowsInComboBox(list, appContext::comboTables);
-        }
-    }
+    
 }
 
 void resetDataAndMoveToSelectTableProc(int lWord, int hWord)
 {
-    if (lWord == COMBO_TABLES) {
-        switch (hWord) {
-        case CBN_SELCHANGE:
+    reset();
 
-            int line = SendMessage(appContext::comboTables, CB_GETCURSEL, 0, 0);
+    appContext::requestStr = sql::SQLString("SHOW TABLES");
+    appContext::resultCode = executeRequest(
+        g::connection,
+        appContext::requestStr,
+        appContext::resultAnswer,
+        appContext::resultTable
+    );
+    appContext::requestStr = sql::SQLString("");
 
-            if (line != CB_ERR) {
-                request::tokens.clear();
-                request::table = appContext::resultTable[line+1][0];
-                request::tokens.push_back("SELECT * FROM ");
-                request::tokens.push_back(request::table);
-                request::tokens.push_back(";");
-                fillMultilineViewFromTokens(appContext::multilineEdit, request::tokens);
-                updateRequestStr(request::tokens);
-            }
-            break;
+    request::tokens.clear();
+    request::tokens.push_back("SELECT * FROM ");
+    request::tokens.push_back("tb_pos");
+
+    if (appContext::resultCode == 0) {
+        g::selectedTables.clear();
+        for (size_t i = 1; i < appContext::resultTable.size(); ++i) {
+            g::selectedTables.push_back(appContext::resultTable[i][0]);
         }
-    }
-    else {
-        reset();
 
-        
-
-        appContext::requestStr = "SHOW TABLES;";
-        appContext::resultCode = executeRequest(
-            g::connection,
-            appContext::requestStr,
-            appContext::resultAnswer,
-            appContext::resultTable
-        );
-        appContext::requestStr = "";
-
-        if (appContext::resultCode == 0) {
-            std::vector<std::string> list;
-            for (size_t i = 1; i < appContext::resultTable.size(); ++i) {
-                list.push_back(appContext::resultTable[i][0]);
-            }
-
-            clearComboBox(appContext::comboTables);
-            insertRowsInComboBox(list, appContext::comboTables);
-        }
+        clearComboBox(appContext::comboTables);
+        insertRowsInComboBox(g::selectedTables, appContext::comboTables);
     }
 }
 
 void executeRequestProc(int lWord, int hWord)
 {
+    updateRequestStr(request::tokens);
     appContext::resultCode = executeRequest(
         g::connection,
         appContext::requestStr,
@@ -631,22 +643,10 @@ void executeRequestProc(int lWord, int hWord)
     else {
         SendMessage(appContext::mainWindow, WM_COMMAND, MAKEWPARAM(SIGNAL_ERROR, 0), 0);
     }
-   
-    
 }
 
 void successProc(int lWord, int hWord)
 {
-    if (COLUMNS_COUNT != 0) {
-        for (int i = 0; i < COLUMNS_COUNT; i++) {
-            ListView_DeleteColumn(appContext::hwndTable, i);
-        }
-        ListView_DeleteAllItems(appContext::hwndTable);
-        for (int i = 0; i < COLUMNS_COUNT; i++) {
-            ListView_DeleteColumn(appContext::hwndTable, i);
-        }
-    }
-   
     LVCOLUMN lvC;
     LVITEM lvI;
 
@@ -707,24 +707,319 @@ void errorProc(int lWord, int hWord)
     
 }
 
+void closeErrorWindowProc(int lWord, int hWord)
+{
+    SetWindowText(appContext::msgView, "");
+}
+
 void startBuildDeleteProc(int lWord, int hWord)
 {
+    appContext::requestStr = sql::SQLString((std::string("SHOW FIELDS FROM ") + request::table).c_str());
 
+    appContext::resultCode = executeRequest(
+        g::connection,
+        appContext::requestStr,
+        appContext::resultAnswer,
+        appContext::resultTable
+    );
+    appContext::requestStr = sql::SQLString("");
+
+    request::tokens.push_back("DELETE FROM ");
+    request::tokens.push_back("tb_pos");
+    fillMultilineViewFromTokens(appContext::multilineEdit, request::tokens);
+    updateRequestStr(request::tokens);
+
+
+    if (appContext::resultCode == 0) {
+        g::selectedFields.clear();
+        for (size_t i = 1; i < appContext::resultTable.size(); ++i) {
+            g::selectedFields.push_back(appContext::resultTable[i][0]);
+        }
+
+        clearComboBox(appContext::comboFields);
+        insertRowsInComboBox(g::selectedFields, appContext::comboFields);
+    }
 }
 
 void startBuildSelectProc(int lWord, int hWord)
 {
+    appContext::requestStr = sql::SQLString((std::string("SHOW FIELDS FROM ") + request::table).c_str());
+
+    appContext::resultCode = executeRequest(
+        g::connection,
+        appContext::requestStr,
+        appContext::resultAnswer,
+        appContext::resultTable
+    );
+    appContext::requestStr = sql::SQLString("");
+
+    request::tokens.push_back("SELECT ");
+    request::tokens.push_back(" FROM ");
+    request::tokens.push_back("tb_pos");
+    fillMultilineViewFromTokens(appContext::multilineEdit, request::tokens);
+    updateRequestStr(request::tokens);
+
+
+    if (appContext::resultCode == 0) {
+        g::selectedFields.clear();
+        for (size_t i = 1; i < appContext::resultTable.size(); ++i) {
+            g::selectedFields.push_back(appContext::resultTable[i][0]);
+        }
+
+        clearComboBox(appContext::comboFields);
+        insertRowsInComboBox(g::selectedFields, appContext::comboFields);
+    }
 }
 
 void startBuildInsertProc(int lWord, int hWord)
 {
+    appContext::requestStr = sql::SQLString((std::string("SHOW FIELDS FROM ") + request::table).c_str());
+
+    appContext::resultCode = executeRequest(
+        g::connection,
+        appContext::requestStr,
+        appContext::resultAnswer,
+        appContext::resultTable
+    );
+    appContext::requestStr = sql::SQLString("");
+
+    request::tokens.push_back("INSERT INTO ");
+    request::tokens.push_back("tb_pos");
+    request::tokens.push_back(" (");
+    request::tokens.push_back(") VALUES (");
+    request::tokens.push_back(")");
+    fillMultilineViewFromTokens(appContext::multilineEdit, request::tokens);
+    updateRequestStr(request::tokens);
+
+
+    if (appContext::resultCode == 0) {
+        g::selectedFields.clear();
+        for (size_t i = 1; i < appContext::resultTable.size(); ++i) {
+            g::selectedFields.push_back(appContext::resultTable[i][0]);
+        }
+
+        clearComboBox(appContext::comboFields);
+        insertRowsInComboBox(g::selectedFields, appContext::comboFields);
+    }
 }
 
 void startBuildUpdateProc(int lWord, int hWord)
 {
+    appContext::requestStr = sql::SQLString((std::string("SHOW FIELDS FROM ") + request::table).c_str());
+
+    appContext::resultCode = executeRequest(
+        g::connection,
+        appContext::requestStr,
+        appContext::resultAnswer,
+        appContext::resultTable
+    );
+    appContext::requestStr = sql::SQLString("");
+
+    request::tokens.push_back("UPDATE ");
+    request::tokens.push_back("tb_pos");
+    request::tokens.push_back(" SET ");
+    fillMultilineViewFromTokens(appContext::multilineEdit, request::tokens);
+    updateRequestStr(request::tokens);
+
+
+    if (appContext::resultCode == 0) {
+        g::selectedFields.clear();
+        for (size_t i = 1; i < appContext::resultTable.size(); ++i) {
+            g::selectedFields.push_back(appContext::resultTable[i][0]);
+        }
+
+        clearComboBox(appContext::comboFields);
+        insertRowsInComboBox(g::selectedFields, appContext::comboFields);
+    }
 }
 
+void clearTableProc(int lWord, int hWord)
+{
+    for (int i = 0; i < COLUMNS_COUNT; i++) {
+        ListView_DeleteColumn(appContext::hwndTable, i);
+    }
+    ListView_DeleteAllItems(appContext::hwndTable);
+    for (int i = 0; i < COLUMNS_COUNT; i++) {
+        ListView_DeleteColumn(appContext::hwndTable, i);
+    }
+}
 
+void addFieldToRequestProc(int lWord, int hWord)
+{
+    
 
+    if (request::tokens[0] == "SELECT ") {
+        if (lWord == BUTTON_OK) {
+            if (request::tokens[1] != " FROM ") {
+                for (size_t i = 0; i < request::tokens.size(); ++i) {
+                    if (request::tokens[i] == " FROM ") {
+                        request::tokens.insert(request::tokens.begin() + i, ",");
+                        request::tokens.insert(request::tokens.begin() + i + 1, request::field);
+                        break;
+                    }
+                }
+            }
+            else {
+                request::tokens.insert(request::tokens.begin() + 1, request::field);
+            }
 
+        }
+    }
+    else if (request::tokens[0] == "INSERT INTO ") {
+        if (request::tokens[3] != ") VALUES (") {
+            for (size_t i = 0; i < request::tokens.size(); ++i) {
+                if (request::tokens[i] == ") VALUES (") {
+                    request::tokens.insert(request::tokens.begin() + i, ",");
+                    request::tokens.insert(request::tokens.begin() + i + 1, request::field);
+                    break;
+                }
+            }
+        }
+        else {
+            request::tokens.insert(request::tokens.begin() + 3, request::field);
+        }
+    }
+    else if (request::tokens[0] == "UPDATE ") {
+        if (request::tokens[request::tokens.size() - 1] != " SET ") {
+            request::tokens.push_back(", ");
+        }
+        request::tokens.push_back(request::field + "=");
+    }
+    fillMultilineViewFromTokens(appContext::multilineEdit, request::tokens);
+    updateRequestStr(request::tokens);
+}
+
+void saveSelFieldProc(int lWord, int hWord)
+{
+    switch (hWord) {
+    case CBN_SELCHANGE:
+
+        int line = SendMessage(appContext::comboFields, CB_GETCURSEL, 0, 0);
+
+        if (line != CB_ERR) {
+            request::field = g::selectedFields[line];
+        }
+        break;
+    }
+}
+
+void saveSelTableProc(int lWord, int hWord)
+{
+    switch (hWord) {
+    case CBN_SELCHANGE:
+
+        int line = SendMessage(appContext::comboTables, CB_GETCURSEL, 0, 0);
+
+        if (line != CB_ERR) {
+            request::table = g::selectedTables[line];
+        }
+        break;
+    }
+}
+
+void saveSelLogicOpProc(int lWord, int hWord)
+{
+    switch (hWord) {
+    case CBN_SELCHANGE:
+
+        int line = SendMessage(appContext::comboConditions, CB_GETCURSEL, 0, 0);
+
+        if (line != CB_ERR) {
+            request::logicOp = g::conditions[line];
+        }
+        break;
+    }
+}
+
+void saveSelCompareOpProc(int lWord, int hWord)
+{
+    switch (hWord) {
+    case CBN_SELCHANGE:
+
+        int line = SendMessage(appContext::comboOperators, CB_GETCURSEL, 0, 0);
+
+        if (line != CB_ERR) {
+            request::compareOp = g::operators[line];
+        }
+        break;
+    }
+}
+
+void insertFieldValueProc(int lWord, int hWord)
+{
+    char buffer[1024];
+    memset(buffer, '\0', 1024);
+    GetWindowText(appContext::edit, buffer, 1024);
+
+    std::string strBuf = "'" + std::string(buffer) + "'";
+
+    if (request::tokens[0] == "INSERT INTO ") {
+       
+
+        if (request::tokens[request::tokens.size() - 2] != ") VALUES (") {
+            for (size_t i = 0; i < request::tokens.size(); ++i) {
+                if (request::tokens[i] == ")") {
+                    request::tokens.insert(request::tokens.begin() + i, ",");
+                    request::tokens.insert(request::tokens.begin() + i + 1, strBuf);
+                    break;
+                }
+            }
+        }
+        else {
+            request::tokens.insert(request::tokens.begin() + request::tokens.size() - 1, strBuf);
+        }
+    }
+    else if (request::tokens[0] == "UPDATE ") {
+        request::tokens.push_back(strBuf);
+    }
+    fillMultilineViewFromTokens(appContext::multilineEdit, request::tokens);
+    updateRequestStr(request::tokens);
+}
+
+void startBuildWhereSectionProc(int lWord, int hWord)
+{
+    bool findWhereSection = false;
+    for (auto token : request::tokens) {
+        if (token == " WHERE ") {
+            findWhereSection = true;
+            break;
+        }
+    }
+
+    if (!findWhereSection) {
+        request::tokens.push_back(" WHERE ");
+    }
+
+    request::tokens.push_back(request::field);
+    fillMultilineViewFromTokens(appContext::multilineEdit, request::tokens);
+    updateRequestStr(request::tokens);
+}
+
+void insertFieldValueInWhereProc(int lWord, int hWord)
+{
+    char buffer[1024];
+    memset(buffer, '\0', 1024);
+    GetWindowText(appContext::edit, buffer, 1024);
+
+    std::string strBuf = "'" + std::string(buffer) + "' ";
+
+    request::tokens.push_back(strBuf);
+    fillMultilineViewFromTokens(appContext::multilineEdit, request::tokens);
+    updateRequestStr(request::tokens);
+}
+
+void insertCompareOperatorProc(int lWord, int hWord)
+{
+    request::tokens.push_back(request::compareOp);
+    fillMultilineViewFromTokens(appContext::multilineEdit, request::tokens);
+    updateRequestStr(request::tokens);
+
+}
+
+void insertLogicOperatorProc(int lWord, int hWord)
+{
+    request::tokens.push_back(request::logicOp);
+    fillMultilineViewFromTokens(appContext::multilineEdit, request::tokens);
+    updateRequestStr(request::tokens);
+}
 

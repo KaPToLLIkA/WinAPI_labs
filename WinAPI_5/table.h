@@ -56,11 +56,14 @@ enum class Actions {
 	addFieldToRequest,
 	startBuildWhereSection,
 	insertFieldValue,
-	addFieldToRequestsCondition,
 	execRequest,
 	insertComparisonOperator,
 	insertFieldValueInWhere,
 	insertLogicOperator,
+	saveSelTable,
+	saveSelField,
+	saveSelLogicOp,
+	saveSelCompareOp,
 	//insertFieldInRequest,
 	//insertFieldValue,
 	//startBuildWhereSection,
@@ -82,6 +85,10 @@ enum class Signals {
 	menuTableItem,
 	success,
 	error,
+	selTable,
+	selField,
+	selLogicOp,
+	selCompareOp,
 };
 
 //1.	Выпадающий список таблиц
@@ -141,25 +148,25 @@ char contextTable[17][16] = {
 
 
 
-Actions actionTable[17][12] = {
-	//			0				 1											 2								3									4								5								6								7									8															9						10								11   
-/*s*/	{Actions::emptyA, Actions::emptyA,						Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::emptyA,								Actions::emptyA,							Actions::emptyA,			Actions::emptyA, },
-/*1*/	{Actions::emptyA, Actions::emptyA,						Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA, },
-/*2*/	{Actions::emptyA, Actions::emptyA,						Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::execRequest,		Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA, },
-/*3*/	{Actions::emptyA, Actions::emptyA,						Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::showResult,		Actions::showError, },
-/*4*/	{Actions::emptyA, Actions::closeErrorWindow,			Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA, },
-/*5*/	{Actions::emptyA, Actions::clearTable,					Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA, },
-/*6*/	{Actions::emptyA, Actions::emptyA,						Actions::emptyA,						Actions::startBuildSelect,		Actions::startBuildDelete,		Actions::startBuildUpdate,		Actions::startBuildInsert,		Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA, },
-/*7*/	{Actions::emptyA, Actions::addFieldToRequest,			Actions::startBuildWhereSection,		Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA, },
-/*8*/	{Actions::emptyA, Actions::insertFieldValue,			Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA, },
-/*9*/	{Actions::emptyA, Actions::addFieldToRequestsCondition,	Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::execRequest,		Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA, },
-/*10*/	{Actions::emptyA, Actions::insertComparisonOperator,	Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA, },
-/*11*/	{Actions::emptyA, Actions::insertFieldValue,			Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA, },
-/*12*/	{Actions::emptyA, Actions::insertLogicOperator,			Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA, },
-/*13*/	{Actions::emptyA, Actions::addFieldToRequest,			Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::execRequest,		Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA, },
-/*14*/	{Actions::emptyA, Actions::insertFieldValue,			Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA, },
-/*15*/	{Actions::emptyA, Actions::addFieldToRequest,			Actions::startBuildWhereSection,		Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA, },
-/*f*/	{Actions::emptyA, Actions::emptyA,						Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::emptyA,								Actions::emptyA,							Actions::emptyA,			Actions::emptyA, },
+Actions actionTable[17][16] = {
+	//			0				 1											 2								3									4								5								6								7									8															9						10								11					12						13						14				15					
+/*s*/	{Actions::emptyA, Actions::emptyA,						Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::emptyA,								Actions::emptyA,							Actions::emptyA,			Actions::emptyA,		Actions::emptyA,		Actions::emptyA,		Actions::emptyA, Actions::emptyA,},
+/*1*/	{Actions::emptyA, Actions::emptyA,						Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA,		Actions::emptyA,		Actions::emptyA,		Actions::emptyA, Actions::emptyA,},
+/*2*/	{Actions::emptyA, Actions::emptyA,						Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::execRequest,		Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA,		Actions::saveSelTable,	Actions::emptyA,		Actions::emptyA, Actions::emptyA,},
+/*3*/	{Actions::emptyA, Actions::emptyA,						Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::showResult,		Actions::showError,		Actions::emptyA,		Actions::emptyA,		Actions::emptyA, Actions::emptyA,},
+/*4*/	{Actions::emptyA, Actions::closeErrorWindow,			Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA,		Actions::emptyA,		Actions::emptyA,		Actions::emptyA, Actions::emptyA,},
+/*5*/	{Actions::emptyA, Actions::clearTable,					Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA,		Actions::emptyA,		Actions::emptyA,		Actions::emptyA, Actions::emptyA,},
+/*6*/	{Actions::emptyA, Actions::emptyA,						Actions::emptyA,						Actions::startBuildSelect,		Actions::startBuildDelete,		Actions::startBuildUpdate,		Actions::startBuildInsert,		Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA,		Actions::saveSelTable,	Actions::emptyA,		Actions::emptyA, Actions::emptyA,},
+/*7*/	{Actions::emptyA, Actions::addFieldToRequest,			Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA,		Actions::emptyA,		Actions::saveSelField,	Actions::emptyA, Actions::emptyA,},
+/*8*/	{Actions::emptyA, Actions::insertFieldValue,			Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA,		Actions::emptyA,		Actions::emptyA,		Actions::emptyA, Actions::emptyA,},
+/*9*/	{Actions::emptyA, Actions::startBuildWhereSection,		Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::execRequest,		Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA,		Actions::emptyA,		Actions::saveSelField,	Actions::emptyA, Actions::emptyA,},
+/*10*/	{Actions::emptyA, Actions::insertComparisonOperator,	Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA,		Actions::emptyA,		Actions::emptyA,		Actions::emptyA, Actions::saveSelCompareOp,},
+/*11*/	{Actions::emptyA, Actions::insertFieldValueInWhere,		Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA,		Actions::emptyA,		Actions::emptyA,		Actions::emptyA, Actions::emptyA,},
+/*12*/	{Actions::emptyA, Actions::insertLogicOperator,			Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA,		Actions::emptyA,		Actions::emptyA,		Actions::saveSelLogicOp, Actions::emptyA,},
+/*13*/	{Actions::emptyA, Actions::addFieldToRequest,			Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::execRequest,		Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA,		Actions::emptyA,		Actions::saveSelField,	Actions::emptyA, Actions::emptyA,},
+/*14*/	{Actions::emptyA, Actions::insertFieldValue,			Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA,		Actions::emptyA,		Actions::emptyA,		Actions::emptyA, Actions::emptyA,},
+/*15*/	{Actions::emptyA, Actions::addFieldToRequest,			Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::resetDataAndMoveToRequestConstruct,	Actions::resetDataAndMoveToSelectTable,		Actions::emptyA,			Actions::emptyA,		Actions::emptyA,		Actions::saveSelField,	Actions::emptyA, Actions::emptyA,},
+/*f*/	{Actions::emptyA, Actions::emptyA,						Actions::emptyA,						Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,				Actions::emptyA,			Actions::emptyA,								Actions::emptyA,							Actions::emptyA,			Actions::emptyA,		Actions::emptyA,		Actions::emptyA,		Actions::emptyA, Actions::emptyA,},
 
 };
 
@@ -178,26 +185,26 @@ Actions actionTable[17][12] = {
 //11 error
 //
 
-States stateMoveTable[17][12] = {
+States stateMoveTable[17][16] = {
 
-	//			0			1			2			3			4			5			6			7			8			9			10			11
-	/*s*/	{States::s1, States::s,  States::s,  States::s,  States::s,  States::s,  States::s,  States::s,  States::s,  States::s,  States::s,  States::s, },
-	/*1*/	{States::s1, States::s1, States::s1, States::s1, States::s1, States::s1, States::s1, States::s1, States::s6, States::s2, States::s1, States::s1,},
-	/*2*/	{States::s2, States::s2, States::s2, States::s2, States::s2, States::s2, States::s2, States::s3, States::s6, States::s2, States::s2, States::s2,},
-	/*3*/	{States::s3, States::s3, States::s3, States::s3, States::s3, States::s3, States::s3, States::s3, States::s6, States::s2, States::s5, States::s4,},
-	/*4*/	{States::s4, States::s1, States::s4, States::s4, States::s4, States::s4, States::s4, States::s4, States::s6, States::s2, States::s4, States::s4,},
-	/*5*/	{States::s5, States::s1, States::s5, States::s5, States::s5, States::s5, States::s5, States::s5, States::s6, States::s2, States::s5, States::s5,},
-	/*6*/	{States::s6, States::s6, States::s6, States::s15,States::s9, States::s7, States::s13,States::s6, States::s6, States::s2, States::s6, States::s6,},
-	/*7*/	{States::s7, States::s8, States::s9, States::s7, States::s7, States::s7, States::s7, States::s7, States::s6, States::s2, States::s7, States::s7,},
-	/*8*/	{States::s8, States::s7, States::s8, States::s8, States::s8, States::s8, States::s8, States::s8, States::s6, States::s2, States::s8, States::s8,},
-	/*9*/	{States::s9, States::s10,States::s9, States::s9, States::s9, States::s9, States::s9, States::s3, States::s6, States::s2, States::s9, States::s9,},
-	/*10*/	{States::s10,States::s11,States::s10,States::s10,States::s10,States::s10,States::s10,States::s10,States::s6, States::s2, States::s10,States::s10,},
-	/*11*/	{States::s11,States::s12,States::s11,States::s11,States::s11,States::s11,States::s11,States::s11,States::s6, States::s2, States::s11,States::s11,},
-	/*12*/	{States::s12,States::s9, States::s12,States::s12,States::s12,States::s12,States::s12,States::s12,States::s6, States::s2, States::s12,States::s12,},
-	/*13*/	{States::s13,States::s14,States::s13,States::s13,States::s13,States::s13,States::s13,States::s3, States::s6, States::s2, States::s13,States::s13,},
-	/*14*/	{States::s14,States::s13,States::s14,States::s14,States::s14,States::s14,States::s14,States::s14,States::s6, States::s2, States::s14,States::s14,},
-	/*15*/	{States::s15,States::s15,States::s9, States::s15,States::s15,States::s15,States::s15,States::s15,States::s6, States::s2, States::s15,States::s15,},
-	/*f*/	{States::f,  States::f,  States::f,  States::f,  States::f,  States::f,  States::f,  States::f,  States::f,  States::f,  States::f,  States::f, }
+	//			0			1			2			3			4			5			6			7			8			9			10			11			12				13			14			15
+	/*s*/	{States::s1, States::s,  States::s,  States::s,  States::s,  States::s,  States::s,  States::s,  States::s,  States::s,  States::s,  States::s,   States::s,   States::s,   States::s,   States::s,  },
+	/*1*/	{States::s1, States::s1, States::s1, States::s1, States::s1, States::s1, States::s1, States::s1, States::s6, States::s2, States::s1, States::s1,  States::s1,  States::s1,  States::s1,  States::s1, },
+	/*2*/	{States::s2, States::s2, States::s2, States::s2, States::s2, States::s2, States::s2, States::s3, States::s6, States::s2, States::s2, States::s2,  States::s2,  States::s2,  States::s2,  States::s2, },
+	/*3*/	{States::s3, States::s3, States::s3, States::s3, States::s3, States::s3, States::s3, States::s3, States::s6, States::s2, States::s5, States::s4,  States::s3,  States::s3,  States::s3,  States::s3, },
+	/*4*/	{States::s4, States::s1, States::s4, States::s4, States::s4, States::s4, States::s4, States::s4, States::s6, States::s2, States::s4, States::s4,  States::s4,  States::s4,  States::s4,  States::s4, },
+	/*5*/	{States::s5, States::s1, States::s5, States::s5, States::s5, States::s5, States::s5, States::s5, States::s6, States::s2, States::s5, States::s5,  States::s5,  States::s5,  States::s5,  States::s5, },
+	/*6*/	{States::s6, States::s6, States::s6, States::s15,States::s9, States::s7, States::s13,States::s6, States::s6, States::s2, States::s6, States::s6,  States::s6,  States::s6,  States::s6,  States::s6, },
+	/*7*/	{States::s7, States::s8, States::s9, States::s7, States::s7, States::s7, States::s7, States::s7, States::s6, States::s2, States::s7, States::s7,  States::s7,  States::s7,  States::s7,  States::s7, },
+	/*8*/	{States::s8, States::s7, States::s8, States::s8, States::s8, States::s8, States::s8, States::s8, States::s6, States::s2, States::s8, States::s8,  States::s8,  States::s8,  States::s8,  States::s8, },
+	/*9*/	{States::s9, States::s10,States::s9, States::s9, States::s9, States::s9, States::s9, States::s3, States::s6, States::s2, States::s9, States::s9,  States::s9,  States::s9,  States::s9,  States::s9, },
+	/*10*/	{States::s10,States::s11,States::s10,States::s10,States::s10,States::s10,States::s10,States::s10,States::s6, States::s2, States::s10,States::s10, States::s10, States::s10, States::s10, States::s10,},
+	/*11*/	{States::s11,States::s12,States::s11,States::s11,States::s11,States::s11,States::s11,States::s11,States::s6, States::s2, States::s11,States::s11, States::s11, States::s11, States::s11, States::s11,},
+	/*12*/	{States::s12,States::s9, States::s12,States::s12,States::s12,States::s12,States::s12,States::s12,States::s6, States::s2, States::s12,States::s12, States::s12, States::s12, States::s12, States::s12,},
+	/*13*/	{States::s13,States::s14,States::s13,States::s13,States::s13,States::s13,States::s13,States::s3, States::s6, States::s2, States::s13,States::s13, States::s13, States::s13, States::s13, States::s13,},
+	/*14*/	{States::s14,States::s13,States::s14,States::s14,States::s14,States::s14,States::s14,States::s14,States::s6, States::s2, States::s14,States::s14, States::s14, States::s14, States::s14, States::s14,},
+	/*15*/	{States::s15,States::s15,States::s9, States::s15,States::s15,States::s15,States::s15,States::s15,States::s6, States::s2, States::s15,States::s15, States::s15, States::s15, States::s15, States::s15,},
+	/*f*/	{States::f,  States::f,  States::f,  States::f,  States::f,  States::f,  States::f,  States::f,  States::f,  States::f,  States::f,  States::f,   States::f,   States::f,   States::f,   States::f,  }
 
 };
 

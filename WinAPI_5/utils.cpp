@@ -8,6 +8,11 @@ sql::Connection* connect(sql::SQLString address, sql::SQLString user, sql::SQLSt
 
 int executeRequest(sql::Connection* con, sql::SQLString& request, std::string& answer, TABLE& table)
 {
+	
+	request.append(";");
+	
+	
+
 	answer.clear();
 	table.clear();
 	
@@ -18,12 +23,16 @@ int executeRequest(sql::Connection* con, sql::SQLString& request, std::string& a
 
 	}
 	catch (sql::SQLException ex) {
-		answer = ex.getSQLStateCStr();
-		return ex.getErrorCode();
+		answer = ex.what();
+		int retVal = ex.getErrorCode();
+		if (retVal == 0)
+			retVal = -1;
+		return retVal;
 	}
 
 	uint32_t columnCount = res->getMetaData()->getColumnCount();
 	
+
 	ROW columns;
 	for (uint32_t i = 1; i <= columnCount; ++i) {
 
