@@ -2,9 +2,16 @@
 #include "utils.h"
 #include "table.h"
 
+#define ARCHIVE_CLASS ("Archive")
+#define ARCHIVE_X (10)
+#define ARCHIVE_Y (10)
+#define ARCHIVE_W (800)
+#define ARCHIVE_H (600)
+
+
 #define MENU_ITEM_TABLE_MODE            20001
 #define MENU_ITEM_QUERY_BUILDER_MODE    20002
-
+#define MENU_ITEM_ARCHIVE_MODE          20003
 
 #define ID_TABLE        10001
 
@@ -27,6 +34,11 @@
 #define SIGNAL_ERROR        10031
 #define SIGNAL_SUCCESS      10032
 
+#define ARCH_BUTTON_OK      30001
+#define ARCH_BUTTON_UP      30002
+#define ARCH_BUTTON_DOWN    30003
+#define ARCH_BUTTON_EXIT    30004
+#define ARCH_BUTTON_EXECUTE 30005
 
 
 namespace g {
@@ -65,6 +77,13 @@ namespace rect {
     RECT multiline = { 500, 0, 800, 400 };
     RECT msgView = { 250, 0, 450, 400 };
 
+
+    RECT archButtonOk = { 100,0,600,20 },
+        archButtonExec = { 100,40,600,60 },
+        archButtonDown = { 100,80,600,100 },
+        archList = { 100,120,600,300 },
+        archButtonUp = { 100,320,600,340 },
+        archButtonExit = { 100,360,600,380 };
 }
 
 namespace request {
@@ -73,6 +92,17 @@ namespace request {
     std::string field;
     std::string logicOp;
     std::string compareOp;
+}
+
+namespace archive {
+    HWND window;
+    HWND buttonOk,
+        buttonExec,
+        buttonDowm,
+        buttonUp,
+        buttonExit;
+
+    HWND list;
 }
 
 namespace appContext {
@@ -116,6 +146,15 @@ namespace appContext {
     
 }
 
+static std::vector<std::string> savedRequests = { 
+    "SELECT * FROM list", 
+    "SELECT id FROM list", 
+    "SELECT * FROM address", 
+    "SELECT id FROM address" 
+};
+
+static long savedRequestIndex = 0;
+
 static int COLUMNS_COUNT = 0;
 static int ROWS_COUNT = 0;
 
@@ -140,7 +179,9 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 void resetDataAndMoveToRequestConstructProc(int lWord, int hWord);
 void resetDataAndMoveToSelectTableProc(int lWord, int hWord);
+void resetDataAndMoveToArchiveProc(int lWord, int hWord);
 void executeRequestProc(int lWord, int hWord);
+void executeRequestArchiveProc(int lWord, int hWord);
 void successProc(int lWord, int hWord);
 void errorProc(int lWord, int hWord);
 void closeErrorWindowProc(int lWord, int hWord);
@@ -166,6 +207,16 @@ void startBuildWhereSectionProc(int lWord, int hWord);
 void insertFieldValueInWhereProc(int lWord, int hWord);
 void insertCompareOperatorProc(int lWord, int hWord);
 void insertLogicOperatorProc(int lWord, int hWord);
+
+void moveUpSelectionProc(int lWord, int hWord);
+void moveDownSelectionProc(int lWord, int hWord);
+void closeArchProc(int lWord, int hWord);
+
+
+
+HWND InitArchiveWindow(HINSTANCE globalInst);
+
+LRESULT CALLBACK WndArchiveProc(HWND, UINT, WPARAM, LPARAM);
 
 
 int WINAPI WinMain(
@@ -226,6 +277,14 @@ void contextChange(States state)
     changeContextItem(appContext::hwndTable, contextTable[s][(int)UIitems::resultTable]);
     changeContextItem(appContext::multilineEdit, contextTable[s][(int)UIitems::multilineField]);
     changeContextItem(appContext::msgView, contextTable[s][(int)UIitems::errorMsg]);
+
+    changeContextItem(archive::buttonDowm, contextTable[s][(int)UIitems::archDown]);
+    changeContextItem(archive::buttonExec, contextTable[s][(int)UIitems::archExec]);
+    changeContextItem(archive::buttonOk, contextTable[s][(int)UIitems::archOk]);
+    changeContextItem(archive::buttonUp, contextTable[s][(int)UIitems::archUp]);
+    changeContextItem(archive::buttonExit, contextTable[s][(int)UIitems::archExit]);
+    changeContextItem(archive::list, contextTable[s][(int)UIitems::archList]);
+    changeContextItem(archive::window, contextTable[s][(int)UIitems::archWindow]);
     
 }
 
@@ -295,12 +354,39 @@ void signalSelector(int lWord, int hWord)
     {
         appContext::signalNow = Signals::success;
     } break;
-    case COMBO_CONDITIONS: appContext::signalNow = Signals::selLogicOp; break;
-    case COMBO_FIELDS: appContext::signalNow = Signals::selField;       break;
-    case COMBO_OPERATORS: appContext::signalNow = Signals::selCompareOp;break;
-    case COMBO_TABLES: appContext::signalNow = Signals::selTable;       break;
-    case EDIT: appContext::signalNow = Signals::emptyS;                 break;
-    
+    case COMBO_CONDITIONS: 
+        appContext::signalNow = Signals::selLogicOp; 
+        break;
+    case COMBO_FIELDS: 
+        appContext::signalNow = Signals::selField;       
+        break;
+    case COMBO_OPERATORS: 
+        appContext::signalNow = Signals::selCompareOp;
+        break;
+    case COMBO_TABLES: 
+        appContext::signalNow = Signals::selTable;       
+        break;
+    case EDIT: 
+        appContext::signalNow = Signals::emptyS;                 
+        break;
+    case ARCH_BUTTON_DOWN: 
+        appContext::signalNow = Signals::archDown;                 
+        break;
+    case ARCH_BUTTON_EXECUTE: 
+        appContext::signalNow = Signals::archExecute;                 
+        break;
+    case ARCH_BUTTON_EXIT: 
+        appContext::signalNow = Signals::archExit;                 
+        break;
+    case ARCH_BUTTON_OK: 
+        appContext::signalNow = Signals::archOk;                 
+        break;
+    case ARCH_BUTTON_UP: 
+        appContext::signalNow = Signals::archUp;                 
+        break;
+    case MENU_ITEM_ARCHIVE_MODE: 
+        appContext::signalNow = Signals::menuArchItem;                 
+        break;
     }
 
 }
@@ -351,7 +437,8 @@ ATOM RegClass(
     HINSTANCE hInst,
     UINT style = 0,
     INT clsExtra = 0,
-    INT wndExtra = 0) {
+    INT wndExtra = 0
+) {
     WNDCLASS newClass;
 
     memset(&newClass, 0, sizeof(newClass));
@@ -440,6 +527,8 @@ LRESULT CALLBACK WndProc(
     {
         g::connection->setSchema(g::schema);
         
+        archive::window = InitArchiveWindow(appContext::hInst);
+        ShowWindow(archive::window, SW_SHOW);
 
         appContext::mainWindowMenu = CreateMenu();
 
@@ -451,6 +540,9 @@ LRESULT CALLBACK WndProc(
 
         AppendMenu(appContext::mainWindowSelectModeMenu, MF_ENABLED | MF_STRING,
             MENU_ITEM_QUERY_BUILDER_MODE, "QUERY BUILDER");
+
+        AppendMenu(appContext::mainWindowSelectModeMenu, MF_ENABLED | MF_STRING,
+            MENU_ITEM_ARCHIVE_MODE, "ARCHIVE");
 
         AppendMenu(appContext::mainWindowMenu, MF_ENABLED | MF_POPUP,
             (UINT)appContext::mainWindowSelectModeMenu, "MODE");
@@ -549,6 +641,7 @@ LRESULT CALLBACK WndProc(
         case Actions::saveSelField: saveSelFieldProc(lWord, hWord); break;
         case Actions::saveSelLogicOp: saveSelLogicOpProc(lWord, hWord); break;
         case Actions::saveSelTable: saveSelTableProc(lWord, hWord); break;
+        case Actions::resetDataAndMoveToArchive: resetDataAndMoveToArchiveProc(lWord, hWord); break;
 
         }
 
@@ -624,6 +717,13 @@ void resetDataAndMoveToSelectTableProc(int lWord, int hWord)
     }
 }
 
+void resetDataAndMoveToArchiveProc(int lWord, int hWord)
+{
+    reset();
+    clearComboBox(archive::list);
+    insertRowsInComboBox(savedRequests, archive::list);
+}
+
 void executeRequestProc(int lWord, int hWord)
 {
     updateRequestStr(request::tokens);
@@ -639,9 +739,39 @@ void executeRequestProc(int lWord, int hWord)
 
     if (appContext::resultCode == 0) {
         SendMessage(appContext::mainWindow, WM_COMMAND, MAKEWPARAM(SIGNAL_SUCCESS, 0), 0);
+        std::string request_;
+        for (auto token : request::tokens) {
+            if (token != "tb_pos") {
+                request_.append(token);
+            }
+            else {
+                request_.append(request::table);
+            }
+        }
+        savedRequests.push_back(request_);
     }
     else {
         SendMessage(appContext::mainWindow, WM_COMMAND, MAKEWPARAM(SIGNAL_ERROR, 0), 0);
+    }
+}
+
+void executeRequestArchiveProc(int lWord, int hWord)
+{
+    appContext::resultCode = executeRequest(
+        g::connection,
+        appContext::requestStr,
+        appContext::resultAnswer,
+        appContext::resultTable
+    );
+
+    appContext::stateNow = stateMoveTable[(int)appContext::stateNow][(int)appContext::signalNow];
+    contextChange(appContext::stateNow);
+
+    if (appContext::resultCode == 0) {
+        successProc(lWord, hWord);
+    }
+    else {
+        errorProc(lWord, hWord);
     }
 }
 
@@ -1023,3 +1153,137 @@ void insertLogicOperatorProc(int lWord, int hWord)
     updateRequestStr(request::tokens);
 }
 
+void moveUpSelectionProc(int lWord, int hWord)
+{
+    if (savedRequestIndex != 0) {
+        --savedRequestIndex;
+        SendMessage(archive::list, CB_SETCURSEL, savedRequestIndex, 0);
+        appContext::requestStr = sql::SQLString(savedRequests[savedRequestIndex].c_str());
+    }
+}
+
+void moveDownSelectionProc(int lWord, int hWord)
+{
+    if (savedRequestIndex != savedRequests.size() - 1) {
+        ++savedRequestIndex;
+        SendMessage(archive::list, CB_SETCURSEL, savedRequestIndex, 0);
+        appContext::requestStr = sql::SQLString(savedRequests[savedRequestIndex].c_str());
+    }
+}
+
+void closeArchProc(int lWord, int hWord)
+{
+    clearComboBox(archive::list);
+    insertRowsInComboBox(savedRequests, archive::list);
+}
+
+HWND InitArchiveWindow(HINSTANCE globalInst)
+{
+    WNDCLASS newClass;
+
+    memset(&newClass, 0, sizeof(newClass));
+
+    newClass.lpszClassName = ARCHIVE_CLASS;
+    newClass.lpszMenuName = NULL;
+    newClass.lpfnWndProc = WndArchiveProc;
+    newClass.hInstance = globalInst;
+    newClass.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+    newClass.hCursor = LoadCursor(NULL, IDC_ARROW);
+    newClass.cbClsExtra = 0;
+    newClass.cbWndExtra = 0;
+    newClass.style = CS_HREDRAW | CS_VREDRAW;
+    newClass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+
+    if (RegisterClass(&newClass) == 0) {
+        MessageBox(NULL, "Can't register Archive Window class", "ERROR", MB_OK | MB_ICONERROR);
+    }
+
+    HWND newWindow = CreateWindow(
+        ARCHIVE_CLASS,
+        ARCHIVE_CLASS,
+        WS_OVERLAPPEDWINDOW,
+        ARCHIVE_X, ARCHIVE_Y,
+        ARCHIVE_W, ARCHIVE_H,
+        NULL,
+        NULL,
+        globalInst,
+        NULL);
+
+    return newWindow;
+}
+
+LRESULT CALLBACK WndArchiveProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+
+    switch (Msg) {
+    case WM_CREATE:
+    {
+        archive::buttonOk = createButton("OK", ARCH_BUTTON_OK,
+            hWnd, appContext::hInst, rect::archButtonOk);
+
+        archive::buttonDowm = createButton("DOWN", ARCH_BUTTON_DOWN,
+            hWnd, appContext::hInst, rect::archButtonDown);
+
+        archive::buttonExec = createButton("EXECUTE", ARCH_BUTTON_EXECUTE,
+            hWnd, appContext::hInst, rect::archButtonExec);
+
+        archive::buttonExit = createButton("EXIT", ARCH_BUTTON_EXIT,
+            hWnd, appContext::hInst, rect::archButtonExit);
+
+        archive::buttonUp = createButton("UP", ARCH_BUTTON_UP,
+            hWnd, appContext::hInst, rect::archButtonUp);
+
+        archive::list = CreateWindow(
+            "COMBOBOX",
+            NULL,
+            WS_CHILD | WS_VISIBLE | WS_VSCROLL | CBS_SIMPLE,
+            RCX(rect::archList), RCY(rect::archList),
+            RCW(rect::archList), RCH(rect::archList),
+            hWnd,
+            NULL,
+            appContext::hInst,
+            NULL
+        );
+
+        insertRowsInComboBox(savedRequests, archive::list);
+        contextChange(appContext::stateNow);
+    }
+    break;
+    case WM_COMMAND:
+    {
+        int lWord = LOWORD(wParam);
+        int hWord = HIWORD(wParam);
+
+        signalSelector(lWord, hWord);
+        appContext::actionNow = actionTable[(int)appContext::stateNow][(int)appContext::signalNow];
+
+        switch (appContext::actionNow) {
+        case Actions::closeArch: closeArchProc(lWord, hWord); break;
+        case Actions::moveDownSelection: moveDownSelectionProc(lWord, hWord); break;
+        case Actions::moveUpSelection: moveUpSelectionProc(lWord, hWord); break;
+        case Actions::execRequest: executeRequestArchiveProc(lWord, hWord); break;
+        case Actions::clearTable: clearTableProc(lWord, hWord); break;
+        
+
+        }
+
+        appContext::stateNow = stateMoveTable[(int)appContext::stateNow][(int)appContext::signalNow];
+        contextChange(appContext::stateNow);
+    }
+    break;
+    case WM_CLOSE:
+    {
+        appContext::stateNow = States::s1;
+        contextChange(appContext::stateNow);
+        return 0;
+    }
+    break;
+    case WM_DESTROY:
+    {
+        
+        return 0;
+    }
+    break;
+    }
+    return DefWindowProc(hWnd, Msg, wParam, lParam);
+}
