@@ -97,7 +97,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) 
             10, 70, 200, 40, hWnd, HMENU(ID_BUTTON_STRING), hInst, NULL);
 
         ShowWindow(buttonImage, SW_NORMAL);
-        ShowWindow(buttonImage, SW_NORMAL);
+        ShowWindow(buttonString, SW_NORMAL);
 
         status = DoCreateStatusBar(hWnd, ID_STATUS, hInst, 1);
 
